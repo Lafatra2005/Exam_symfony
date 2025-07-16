@@ -1,0 +1,116 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Tableau de bord analytique{% endblock %}
+
+{% block body %}
+<div class="container my-4 dashboard-container">
+
+    <div class="card mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Filtres</h6>
+        </div>
+        <div class="card-body">
+            {{ form_start(form, {'attr': {'class': 'row g-3 align-items-center'}}) }}
+                <div class="col-auto">
+                    {{ form_widget(form.category, {'attr': {'class': 'form-control'}}) }}
+                </div>
+                <div class="col-auto">
+                    {{ form_widget(form.startDate, {'attr': {'class': 'form-control'}}) }}
+                </div>
+                <div class="col-auto">
+                    {{ form_widget(form.endDate, {'attr': {'class': 'form-control'}}) }}
+                </div>
+                <div class="col-auto">
+                    <button type="submit" name="filter" class="btn btn-primary">
+                        <i class="fas fa-filter"></i> Filtrer
+                    </button>
+                </div>
+                <div class="col-auto">
+                    <button type="submit" name="export" class="btn btn-success">
+                        <i class="fas fa-file-export"></i> Exporter CSV
+                    </button>
+                </div>
+            {{ form_end(form) }}
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <canvas id="analyticsChart" height="100"></canvas>
+        </div>
+    </div>
+
+    <div class="row text-center my-4">
+    <div class="col-md-4 mb-3">
+        <div class="card shadow-sm p-3 h-100">
+            <h5 class="card-title">Total</h5>
+            <p class="card-text fw-bold text-success fs-4">
+                {{ stats.total|number_format(2, ',', ' ') }} €
+            </p>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3">
+        <div class="card shadow-sm p-3 h-100">
+            <h5 class="card-title">Moyenne</h5>
+            <p class="card-text fw-bold text-primary fs-4">
+                {{ stats.average|number_format(2, ',', ' ') }} €
+            </p>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3">
+        <div class="card shadow-sm p-3 h-100">
+            <h5 class="card-title">Enregistrements</h5>
+            <p class="card-text fw-bold text-info fs-4">
+                {{ stats.count }}
+            </p>
+        </div>
+    </div>
+</div>
+
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        const ctx = document.getElementById('analyticsChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: {{ chartData.labels|json_encode|raw }},
+                datasets: [{
+                    label: 'Ventes par catégorie',
+                    data: {{ chartData.values|json_encode|raw }},
+                    backgroundColor: {{ chartData.colors|json_encode|raw }},
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.parsed.y.toFixed(2) + ' €';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return value + ' €';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+{% endblock %}
